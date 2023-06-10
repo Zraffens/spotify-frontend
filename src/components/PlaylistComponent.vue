@@ -13,7 +13,7 @@
           <p>
             With
             <span v-for="artist in artists.slice(0, 2) || []" :key="artist"
-              >{{ artist.title }},
+              >{{ artist }},
             </span>
             and many more
           </p>
@@ -56,12 +56,12 @@
           @mouseover="onHover(`${song.id}`)"
           @mouseleave="onLeave(`${song.id}`)"
         >
-          <td style="width: 6%;">
+          <td style="width: 6%">
             <span class="index">{{ index + 1 }}</span>
             <button
               class="play-song"
               :id="`song${song.id}`"
-              style="display: none;"
+              style="display: none"
               @click="
                 $emit('playAudio', `${playlist.id}`, `${type}`, `${song.id}`)
               "
@@ -69,11 +69,13 @@
               <i class="fas fa-play"></i>
             </button>
           </td>
-          <td style="width: 22%;">
+          <td style="width: 22%">
             <p class="title">{{ song.title }}</p>
-            <router-link to="/" class="artist">{{ song.artistdetails }}</router-link>
+            <router-link to="/" class="artist">{{
+              song.artistdetails.title
+            }}</router-link>
           </td>
-          <td class="album" style="width: 22%;">
+          <td class="album" style="width: 22%">
             <router-link
               v-if="route !== `/albums/albums/${id}`"
               @click="$options.created"
@@ -86,8 +88,8 @@
               >{{ song.album.title }}</router-link
             >
           </td>
-          <td class="date-added" style="width: 22%;"></td>
-          <td class="like" style="width: 6%;">
+          <td class="date-added" style="width: 22%"></td>
+          <td class="like" style="width: 6%">
             <button
               @click="
                 song.liked ? likeSong(song.id, true) : likeSong(song.id, false)
@@ -97,7 +99,7 @@
               <i :class="song.liked ? `fa liked fa-heart` : `fa fa-heart`"></i>
             </button>
           </td>
-          <td class="duration" style="width: 22%;">
+          <td class="duration" style="width: 22%">
             {{ intoMinutes(song.length) }}
           </td>
         </tr>
@@ -124,14 +126,13 @@ export default {
     };
   },
   computed: {
-    
-      totalLength(){
-        let sum = 0
-        this.songs.forEach((song) => {
-          sum+=song.length
-        })
-        return sum
-      }
+    totalLength() {
+      let sum = 0;
+      this.songs.forEach((song) => {
+        sum += song.length;
+      });
+      return sum;
+    },
   },
   async created() {
     // console.log("okay");
@@ -161,36 +162,35 @@ export default {
     //     this.playlist = res.data;
     //     this.songs = res.data.songsinfo
     //   });
-        this.id = this.$route.params.id;
-        if (this.$route.path === `/playlists/${this.id}`) {
-          this.type = 'playlists'
-          let url = `http://localhost:8000/albums/playlists/${this.id}`;
-          await axios.get(url).then((res) => {
-            this.playlist = res.data;
+    this.id = this.$route.params.id;
+    if (this.$route.path === `/playlists/${this.id}`) {
+      this.type = "playlists";
+      let url = `http://localhost:8000/albums/playlists/${this.id}`;
+      await axios.get(url).then((res) => {
+        this.playlist = res.data;
 
-            // this will push the names of the artists in the artists variable
-            this.artists = res.data.artistn
-            // this will push the list of songs available for the given playlist
-            this.songs = res.data.songsinfo
-          });
-        } else if (this.$route.path === `/artists/${this.id}`) {
-          this.type = 'artists'
-          let url = `http://localhost:8000/artists/${this.id}`;
-          this.type = "artists";
-          await axios.get(url).then(async (res) => {
-            this.playlist = res.data;
-            this.songs = res.data.songsinfo
-          }); 
-        }
-        else {
-          this.type = 'albums'
-          let url = `http://localhost:8000/albums/albums/${this.id}`;
-          await axios.get(url).then((res) => {
-            console.log('songinfo', res.data.songsinfo)
-            this.playlist = res.data;
-            this.songs = res.data.songsinfo
-          });
-        }
+        // this will push the names of the artists in the artists variable
+        this.artists = res.data.artistn;
+        // this will push the list of songs available for the given playlist
+        this.songs = res.data.songsinfo;
+      });
+    } else if (this.$route.path === `/artists/${this.id}`) {
+      this.type = "artists";
+      let url = `http://localhost:8000/artists/${this.id}`;
+      this.type = "artists";
+      await axios.get(url).then(async (res) => {
+        this.playlist = res.data;
+        this.songs = res.data.songsinfo;
+      });
+    } else {
+      this.type = "albums";
+      let url = `http://localhost:8000/albums/albums/${this.id}`;
+      await axios.get(url).then((res) => {
+        console.log("songinfo", res.data.songsinfo);
+        this.playlist = res.data;
+        this.songs = res.data.songsinfo;
+      });
+    }
   },
   methods: {
     async allTheFuckingWork() {
@@ -269,16 +269,16 @@ export default {
             this.playlist = res.data;
 
             // this will push the names of the artists in the artists variable
-            this.artists = res.data.artistn
+            this.artists = res.data.artistn;
             // this will push the list of songs available for the given playlist
-            this.songs = res.data.songsinfo
+            this.songs = res.data.songsinfo;
           });
         } else {
           let url = `http://localhost:8000/albums/albums/${this.id}`;
           await axios.get(url).then((res) => {
-            console.log('songinfo', res.data.songsinfo)
+            console.log("songinfo", res.data.songsinfo);
             this.playlist = res.data;
-            this.songs = res.data.songsinfo
+            this.songs = res.data.songsinfo;
           });
         }
       }
@@ -301,6 +301,10 @@ p {
 
 #playlist-container {
   margin: 6.1em 1em 0 0;
+}
+
+.img-container {
+  width: 25%;
 }
 
 .head .flex {

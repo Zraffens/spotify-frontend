@@ -157,11 +157,15 @@ export default {
         await axios
           .get(url) // getting the details of the playlist
           .then(async (res) => {
+            console.log("hello world")
             console.log(res.data.songs, res.data.songsinfo);
             this.playlist = res.data; // putting all the data into this variable
-            let song = res.data.songsinfo[this.index]
-            this.duration = this.intoMinutes(song.length);
+            console.log(this.playlist.songsinfo)
+            let song = res.data.songsinfo.find(obj => obj.id == this.songID)
             this.currentSong = song;
+            console.log('current', this.currentSong)
+            console.log(song)
+            this.duration = this.intoMinutes(song.length);
             this.albumLogo = song.logo;
             // this.duration, currentSong, albumLogo, playlist
           });
@@ -184,18 +188,22 @@ export default {
           });
         });
       } else {
-        const songId = this.playlist.songs[this.index];
-        await axios
-          .get(`http://localhost:8000/songs/${songId}`)
-          .then(async (res1) => {
-            let song = res1.data;
-            song.artist = song.artistdetails.title
-            this.currentSong = song;
-            this.duration = this.intoMinutes(song.length);
-            console.log("went through");
-            const albumID = res1.data.album;
-            this.albumLogo = song.logo
-          });
+        let song = this.playlist.songsinfo[this.index]
+        console.log('getsong', song)
+        // await axios
+        //   .get(`http://localhost:8000/songs/${songId}`)
+        //   .then(async (res1) => {
+        //     let song = res1.data;
+        //     song.artist = song.artistdetails.title
+        //     this.currentSong = song;
+        //     this.duration = this.intoMinutes(song.length);
+        //     console.log("went through");
+        //     const albumID = res1.data.album;
+        //     this.albumLogo = song.logo
+        //   });
+        this.currentSong = song
+        this.duration = this.intoMinutes(song.length)
+        this.albumLogo = song.logo
       }
     },
     checkNavigator() {
@@ -289,26 +297,26 @@ export default {
 
     async next() {
       this.player.pause();
-      let songs = this.playlist.songs;
+      let songs = this.playlist.songsinfo;
       // resetting everything
       document.getElementById("change-time").value = 0;
       this.player.currentTime = 0;
       // conditional to check if it is in shuffle or if it is the last song in the list
-
-      if ((this.songs.length === 1 || this.index + 1 === songs.length) && !this.shuffle) {
+      console.log(this.playlist.songs.length)
+      if ((this.playlist.songsinfo.length === 1 || this.index + 1 === songs.length) && !this.shuffle) {
         this.index = 0;
       } else if (this.shuffle) {
         let index = this.index;
         while (this.index === index) {
-          this.index = Math.floor(Math.random() * this.playlist.songs.length);
+          this.index = Math.floor(Math.random() * this.playlist.songsinfo.length);
         }
       } else {
         this.index++;
       }
 
       // getting the song
-      console.log(this.playlist.songs, this.index)
-      this.getSong(this.playlist.songs[this.index]);
+      console.log(this.playlist.songsinfo, this.index)
+      this.getSong(this.playlist.songsinfo[this.index]);
       this.player.load();
       if (this.played) {
         setTimeout(() => {
@@ -320,8 +328,8 @@ export default {
     },
     prev() {
       this.index =
-        this.index === 0 ? this.playlist.songs.length - 1 : this.index - 1;
-      this.getSong(this.playlist.songs[this.index]);
+        this.index === 0 ? this.playlist.songsinfo.length - 1 : this.index - 1;
+      this.getSong(this.playlist.songsinfo[this.index]);
       this.player.load();
       if (this.played) {
         setTimeout(() => {
