@@ -25,7 +25,7 @@
         :class="{ hidden: !playing }"
         :type="type"
         :id="id"
-        :songID="songID !== 0 ? songID : 0"
+        :songID="songID !== 0 ? songID : 1"
       />
     </div>
   </div>

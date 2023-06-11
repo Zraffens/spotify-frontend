@@ -160,8 +160,8 @@ export default {
             console.log("hello world")
             console.log(res.data.songs, res.data.songsinfo);
             this.playlist = res.data; // putting all the data into this variable
-            console.log(this.playlist.songsinfo)
             let song = res.data.songsinfo.find(obj => obj.id == this.songID)
+            console.log(this.playlist.songsinfo, song, 'info, song')
             this.currentSong = song;
             console.log('current', this.currentSong)
             console.log(song)
