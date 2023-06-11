@@ -16,12 +16,20 @@
         <i class="fas fa-chevron-right"></i>
       </button>
     </div>
-    <div class="grid other-btns">
+    <div v-if="loggedIn" class="grid other-btns">
       <div>
-        <button id="upgrade" class="button flex-1">UPgrade</button>
+        <button id="upgrade" class="button flex-1">Upgrade</button>
       </div>
       <div class="align-right">
         <button id="user" class="button flex-1">User</button>
+      </div>
+    </div>
+    <div v-else class="grid other-btns">
+      <div>
+        <button id="upgrade" class="button flex-1"><router-link to="/login">Log In</router-link></button>
+      </div>
+      <div class="align-right">
+        <button id="user" class="button flex-1">Register</button>
       </div>
     </div>
   </div>
@@ -35,6 +43,11 @@ export default {
       return window.history.length > 2;
     },
   },
+  data() {
+    return {
+      loggedIn: localStorage.getItem("loggedIn")
+    }
+  }
 };
 </script>
 

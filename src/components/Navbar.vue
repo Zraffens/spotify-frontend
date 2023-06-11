@@ -28,6 +28,11 @@
 <script>
 export default {
   name: "Navbar",
+  data() {
+    return {
+      loggedIn: localStorage.getItem("loggedIn")
+    }
+  },
   // Applyiing the focus rule
   mounted() {
     if (this.$router.currentRoute == "/search") {
