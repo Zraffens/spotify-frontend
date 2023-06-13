@@ -36,6 +36,7 @@
 
 <script>
 import axiosInstance from "../axios";
+import { mapActions } from 'vuex';
 import router from "@/router";
 export default {
   name: 'LoginPage',
@@ -60,6 +61,7 @@ export default {
           localStorage.setItem("access_token", res.data.access);
           localStorage.setItem("refresh_token", res.data.refresh);
           localStorage.setItem("loggedIn", true);
+          this.login({ username: this.username })
           axiosInstance.defaults.headers = {
             Authorization: "JWT " + localStorage.getItem("access_token"),
           };
@@ -73,6 +75,7 @@ export default {
           }
         });;
     },
+    ...mapActions(['login']),
   }
 }
 </script>

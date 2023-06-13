@@ -21,7 +21,7 @@
         <button id="upgrade" class="button flex-1">Upgrade</button>
       </div>
       <div class="align-right">
-        <button id="user" class="button flex-1">User</button>
+        <button id="user" class="button flex-1">{{ getUsername }}</button>
       </div>
     </div>
     <div v-else class="grid other-btns">
@@ -29,13 +29,14 @@
         <button id="upgrade" class="button flex-1"><router-link to="/login">Log In</router-link></button>
       </div>
       <div class="align-right">
-        <button id="user" class="button flex-1">Register</button>
+        <button id="user" class="button flex-1"><router-link to="/register">Register</router-link></button>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+import { mapGetters } from 'vuex';
 export default {
   name: "TopBar",
   methods: {
@@ -47,6 +48,11 @@ export default {
     return {
       loggedIn: localStorage.getItem("loggedIn")
     }
+  },
+  computed: {
+    ...mapGetters([
+      'getUsername',
+    ])
   }
 };
 </script>

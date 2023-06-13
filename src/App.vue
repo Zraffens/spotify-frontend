@@ -36,6 +36,8 @@ import Navbar from "./components/Navbar.vue";
 import TopBar from "./components/TopBar.vue";
 import TopBarWithSearch from "./components/TopBarWithSearch.vue";
 import Player from "./components/Player.vue";
+import { mapActions } from "vuex";
+import axiosInstance from "./axios";
 
 export default {
   name: "App",
@@ -54,6 +56,13 @@ export default {
       songID: 0,
     };
   },
+  async created() {
+    await axiosInstance
+      .get("http://localhost:8000/users/profile/")
+      .then((res) => {
+        this.login({ username: res.data.username });
+      });
+  },
   methods: {
     loadSearchBar() {
       this.search = true;
@@ -64,13 +73,14 @@ export default {
       this.songID = songID ? songID : 0;
       this.type = type;
       const player = document.querySelector("#player1 audio");
-      console.log('playerapp', player);
+      console.log("playerapp", player);
       player.load();
       console.log(songID);
     },
     searchFunc(keyword) {
       this.$router.push({ query: { kw: keyword } });
     },
+    ...mapActions(["login"]),
   },
   watch: {
     // this makes the search bar visible when the user goes to the search page

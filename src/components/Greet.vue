@@ -3,7 +3,7 @@
 <template>
   <div id="parent-greet">
     <main>
-      <h2 id="greeting">Good Evening</h2>
+      <h2 id="greeting">Good Evening {{ getUsername }}</h2>
       <div class="grid grid-three">
         <router-link
           v-for="playlist in playlists"
@@ -40,6 +40,7 @@
 
 <script>
 import axios from "axios";
+import { mapGetters } from 'vuex';
 
 export default {
   name: "Greet",
@@ -47,6 +48,11 @@ export default {
     return {
       playlists: {},
     };
+  },
+  computed: {
+    ...mapGetters([
+      'getUsername',
+    ])
   },
   methods: {
     onHoverG(index) {
