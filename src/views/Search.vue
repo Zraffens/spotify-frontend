@@ -172,6 +172,7 @@
 <script>
 import NormalPlaylists from "../components/NormalPlaylists.vue";
 import axios from "axios";
+import axiosInstance from "../axios";
 
 export default {
   name: "Search",
@@ -191,7 +192,7 @@ export default {
       this.topResult = {};
       this.data = { songs: [], albums: [], artists: [] };
       if (keyword) {
-        await axios
+        await axiosInstance
           .get(`http://localhost:8000/songs/filter/${keyword}`)
           .then((res) => {
             this.data.songs = res.data.map((i) => {
@@ -199,14 +200,14 @@ export default {
             });
             this.songAlbum = res.data.album;
           });
-        await axios
+        await axiosInstance
           .get(`http://localhost:8000/albums/filter/${keyword}`)
           .then((res2) => {
             this.data.albums = res2.data.map((i) => {
               return { ...i, type: "album" };
             });
           });
-        await axios
+        await axiosInstance
           .get(`http://localhost:8000/artists/filter/${keyword}`)
           .then((res2) => {
             this.data.artists = res2.data.map((i) => {
@@ -245,7 +246,7 @@ export default {
         }
       });
       song.liked = !song.liked;
-      axios.patch(`http://localhost:8000/songs/${id}/`, {
+      axiosInstance.patch(`http://localhost:8000/songs/${id}/`, {
         liked: song.liked,
       });
     },
@@ -304,7 +305,7 @@ export default {
 };
 </script>
 
-<style>
+<style scoped>
 #top-div {
   margin-top: 3rem;
 }

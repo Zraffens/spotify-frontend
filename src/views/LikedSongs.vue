@@ -106,6 +106,7 @@
 
 <script>
 import axios from "axios";
+import axiosInstance from "../axios";
 
 export default {
   name: "LikedSongs",

@@ -3,15 +3,16 @@ import axios from "axios";
 const baseURL = "http://localhost:8000/";
 
 function get_access() {
+  const access = localStorage.getItem("access_token")
   console.log(localStorage.getItem("access_token"), 'access');
-  return localStorage.getItem("access_token") ?? [];
+  return access ? 'JWT ' + access : [];
 }
-
+console.log(get_access(), 'ass')
 const axiosInstance = axios.create({
   baseURL: baseURL,
   timeout: 10000,
   headers: {
-    Authorization: "JWT " + get_access(),
+    Authorization: get_access(),
     "Content-Type": "application/json",
     accept: "application/json",
   },

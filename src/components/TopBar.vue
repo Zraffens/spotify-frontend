@@ -53,7 +53,7 @@ export default {
     },
     logout() {
       localStorage.clear();
-      router.push("/login");
+      this.$router.push("/login");
     },
   },
   data() {

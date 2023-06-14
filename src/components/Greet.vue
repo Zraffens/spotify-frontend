@@ -40,6 +40,7 @@
 
 <script>
 import axios from "axios";
+import axiosInstance from "../axios";
 import { mapGetters } from 'vuex';
 
 export default {
@@ -68,17 +69,12 @@ export default {
       e.preventDefault();
     },
 
-    // play: (e, id) => {
-    //   var vm = this.self;
-    //   e.preventDefault();
-    //   vm.$emit("play", id, "p");
-    // },
   },
-  created() {
-    axios
-      .get("http://localhost:8000/albums/playlists")
+  mounted() {
+    axiosInstance
+      .get("http://localhost:8000/albums/playlists/")
       .then((data) => (this.playlists = data.data));
-    console.log(this.playlists);
+    console.log('greet', this.playlists);
   },
 };
 </script>

@@ -92,6 +92,7 @@
 
 <script>
 import axios from "axios";
+import axiosInstance from "../axios";
 export default {
   name: "Player",
   data() {
@@ -133,7 +134,7 @@ export default {
     // this gets the required song played
     async starter() {
       if (this.type === "liked") {
-        await axios.get("http://localhost:8000/liked/").get(async (data) => {
+        await axiosInstance.get("http://localhost:8000/liked/").get(async (data) => {
           const songId = this.songID ? this.songID : data.data[this.index];
           let playlist = {
             title: "Liked Songs",
@@ -143,7 +144,7 @@ export default {
           data.data.forEach((song) => {
             playlist.artistn.push(song.artistdetails.title);
           });
-          await axios
+          await axiosInstance
             .get(`http://localhost:8000/songs/${songId}`)
             .then((res) => {
               let song = res.data;
@@ -154,7 +155,7 @@ export default {
         });
       } else {
         const url = this.type === "artists" ? `http://localhost:8000/${this.type}/${this.id}` : `http://localhost:8000/albums/${this.type}/${this.id}`
-        await axios
+        await axiosInstance
           .get(url) // getting the details of the playlist
           .then(async (res) => {
             console.log("hello world")
@@ -178,9 +179,9 @@ export default {
 
     async getSong(id) {
       if (this.type === "liked") {
-        await axios.get("http://localhost:8000/liked/").get((data) => {
+        await axiosInstance.get("http://localhost:8000/liked/").get((data) => {
           const songId = this.songID ? this.songID : data.data[this.index];
-          axios.get(`http://localhost:8000/songs/${songId}`).then((res) => {
+          axiosInstance.get(`http://localhost:8000/songs/${songId}`).then((res) => {
             let song = res.data;
             this.duration = this.intoMinutes(song.length);
             this.currentSong = song;
@@ -290,7 +291,7 @@ export default {
       console.log(this.id);
       this.currentSong.liked = !this.currentSong.liked;
       console.log(this.currentSong);
-      axios.patch(`http://localhost:8000/songs/${this.currentSong.id}/`, {
+      axiosInstance.patch(`http://localhost:8000/songs/${this.currentSong.id}/`, {
         liked: this.currentSong.liked,
       });
     },

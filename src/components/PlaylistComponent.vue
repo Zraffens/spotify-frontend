@@ -9,7 +9,9 @@
         </div>
         <div class="playlist-details">
           <p class="uppercase">{{ type.slice(0, type.length - 1) }}</p>
-          <h1 class="extremely-large">{{ playlist.title }}</h1>
+          <h1 class="extremely-large" @blur="editTitle" :contenteditable="editable">
+            {{ playlist.title }}
+          </h1>
           <p>
             With
             <span v-for="artist in artists.slice(0, 2) || []" :key="artist"
@@ -42,7 +44,6 @@
           <th class="uppercase">#</th>
           <th class="uppercase">title</th>
           <th class="uppercase">album</th>
-          <th class="uppercase">date added</th>
           <th class="uppercase"></th>
           <th class="uppercase">duration</th>
         </tr>
@@ -69,13 +70,13 @@
               <i class="fas fa-play"></i>
             </button>
           </td>
-          <td style="width: 22%">
+          <td style="width: 30%">
             <p class="title">{{ song.title }}</p>
             <router-link to="/" class="artist">{{
               song.artistdetails.title
             }}</router-link>
           </td>
-          <td class="album" style="width: 22%">
+          <td class="album" style="width: 29%">
             <router-link
               v-if="route !== `/albums/albums/${id}`"
               @click="$options.created"
@@ -88,7 +89,6 @@
               >{{ song.album.title }}</router-link
             >
           </td>
-          <td class="date-added" style="width: 22%"></td>
           <td class="like" style="width: 6%">
             <button
               @click="
@@ -99,8 +99,46 @@
               <i :class="song.liked ? `fa liked fa-heart` : `fa fa-heart`"></i>
             </button>
           </td>
-          <td class="duration" style="width: 22%">
+          <td class="duration" style="width: 29%">
             {{ intoMinutes(song.length) }}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <h4 v-if="editable" class="add">Add more songs</h4>
+    <input
+      type="text"
+      name="keyword"
+      id="search-keyword"
+      @input="search"
+      v-model="keyword"
+      placeholder="Search for Songs"
+    />
+
+    <table id="songs" rules="none">
+      <tbody>
+        <tr v-for="(song, index) in results" :key="index">
+          <td style="width: 33%">
+            <p class="title">{{ song.title }}</p>
+            <router-link to="/" class="artist">{{
+              song.artistdetails.title
+            }}</router-link>
+          </td>
+          <td class="album" style="width: 33%">
+            <router-link
+              v-if="route !== `/albums/albums/${id}`"
+              @click="$options.created"
+              :to="{ name: 'Album', params: { id: song.album.id } }"
+              >{{ song.album.title }}</router-link
+            >
+            <router-link
+              v-else
+              :to="{ name: 'Album', params: { id: song.album.id } }"
+              >{{ song.album.title }}</router-link
+            >
+          </td>
+          <td style="width: 33%">
+            <button @click="add(song)" class="add">Add</button>
           </td>
         </tr>
       </tbody>
@@ -110,6 +148,8 @@
 
 <script>
 import axios from "axios";
+import axiosInstance from "../axios";
+import { mapGetters } from "vuex";
 
 export default {
   name: "PlaylistComponent",
@@ -123,6 +163,9 @@ export default {
       songs: [],
       route: this.$route.path,
       key: 0,
+      editable: false,
+      focused: false,
+      results: [],
     };
   },
   computed: {
@@ -133,32 +176,35 @@ export default {
       });
       return sum;
     },
+    ...mapGetters(["getUsername"]),
   },
   async created() {
     this.id = this.$route.params.id;
     if (this.$route.path === `/playlists/${this.id}`) {
       this.type = "playlists";
       let url = `http://localhost:8000/albums/playlists/${this.id}`;
-      await axios.get(url).then((res) => {
+      await axiosInstance.get(url).then((res) => {
         this.playlist = res.data;
-
         // this will push the names of the artists in the artists variable
         this.artists = res.data.artistn;
         // this will push the list of songs available for the given playlist
         this.songs = res.data.songsinfo;
+        if (this.getUsername == res.data.username) {
+          this.editable = true;
+        }
       });
     } else if (this.$route.path === `/artists/${this.id}`) {
       this.type = "artists";
       let url = `http://localhost:8000/artists/${this.id}`;
       this.type = "artists";
-      await axios.get(url).then(async (res) => {
+      await axiosInstance.get(url).then(async (res) => {
         this.playlist = res.data;
         this.songs = res.data.songsinfo;
       });
     } else {
       this.type = "albums";
       let url = `http://localhost:8000/albums/albums/${this.id}`;
-      await axios.get(url).then((res) => {
+      await axiosInstance.get(url).then((res) => {
         console.log("songinfo", res.data.songsinfo);
         this.playlist = res.data;
         this.songs = res.data.songsinfo;
@@ -175,7 +221,7 @@ export default {
       let minutes1 = duration > 60 ? Math.floor(duration / 60) : 0; // basic things to do to convert it into hours and minutes
       if (minutes1 > 60) {
         hours = Math.floor(minutes1 / 60);
-        minutes = minutes1 % 60;
+        let minutes = minutes1 % 60;
         return `${hours} hours ${minutes} minutes`;
       }
       return `${hours} hours ${minutes1} minutes`; // just to make it look better e.g.: 1:05
@@ -206,7 +252,7 @@ export default {
         }
       });
       song.liked = !song.liked;
-      axios.patch(`http://localhost:8000/songs/${id}/`, {
+      axiosInstance.patch(`http://localhost:8000/songs/${id}/`, {
         liked: song.liked,
       });
     },
@@ -227,6 +273,35 @@ export default {
       document.querySelector(`#${id} .play-song`).innerHTML =
         '<i style="color: #1db954;" class="fas fa-pause"></i>';
     },
+    async search() {
+      if (this.keyword) {
+        await axiosInstance
+          .get(`http://localhost:8000/songs/filter/${this.keyword}`)
+          .then((res) => {
+            this.results = res.data.slice(0, 10);
+          });
+        console.log(this.results);
+      }
+    },
+    async add(song) {
+      const songs = this.songs.map(obj => obj.id)
+      this.songs.push(song)
+      songs.push(song.id)
+      console.log(songs)
+      await axiosInstance
+          .patch(`http://localhost:8000/albums/playlists/${this.id}`, {songs: songs})
+          .then((res) => {
+            console.log(res.data);
+          });
+    },
+    async editTitle() {
+      const title = document.querySelector("h1.extremely-large").innerText
+      await axiosInstance
+          .patch(`http://localhost:8000/albums/playlists/${this.id}`, {title: title})
+          .then((res) => {
+            console.log(res.data);
+          });
+    }
   },
 
   watch: {
@@ -238,7 +313,7 @@ export default {
         this.id = this.$route.params.id;
         if (this.$route.path === `/playlists/${this.id}`) {
           let url = `http://localhost:8000/albums/playlists/${this.id}`;
-          await axios.get(url).then((res) => {
+          await axiosInstance.get(url).then((res) => {
             this.playlist = res.data;
 
             // this will push the names of the artists in the artists variable
@@ -248,7 +323,7 @@ export default {
           });
         } else {
           let url = `http://localhost:8000/albums/albums/${this.id}`;
-          await axios.get(url).then((res) => {
+          await axiosInstance.get(url).then((res) => {
             console.log("songinfo", res.data.songsinfo);
             this.playlist = res.data;
             this.songs = res.data.songsinfo;
@@ -257,7 +332,6 @@ export default {
       }
     },
   },
-
 };
 </script>
 
@@ -306,14 +380,18 @@ p {
 }
 
 .fa-play {
-  font-size: 3rem;
+  /* font-size: 3rem; */
   padding: 0.2rem;
 }
 
 #songs {
   width: 100%;
-  text-align: center;
+  /* text-align: center; */
   margin: 2rem 1rem;
+}
+
+.album, .duration, .like {
+  text-align: center;
 }
 
 #songs hr {
@@ -339,5 +417,15 @@ p {
 .play-song {
   border: none;
   cursor: auto;
+}
+
+#search-keyword {
+  background: white;
+  border-radius: 5px;
+  border: 1px solid white;
+  font-size: 1.2rem;
+  color: rgb(1, 1, 1);
+  padding: 0.5em;
+  /* width: 80%; */
 }
 </style>
