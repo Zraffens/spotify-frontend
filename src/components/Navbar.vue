@@ -13,7 +13,17 @@
         <router-link to="/search" class="nav-link">Search</router-link>
       </li>
       <li id="library-link" class="flex">
-        <router-link to="/" class="nav-link">Your Library</router-link><button @click="add" class="btn"><abbr title="Create a New Playlist"><i class="fas fa-plus"></i></abbr></button>
+        <router-link to="/" class="nav-link">Your Library</router-link
+        ><button @click="add" class="btn">
+          <abbr title="Create a New Playlist"><i class="fas fa-plus"></i></abbr>
+        </button>
+      </li>
+      <li v-for="playlist in playlists" :key="playlist.id">
+        <router-link
+          :to="{ name: 'Playlist', params: { id: playlist.id } }"
+          class="nav-link"
+          >{{ playlist.title }}</router-link
+        >
       </li>
     </ul>
     <ul class="nav-links-extra">
@@ -26,13 +36,14 @@
 </template>
 
 <script>
-import axiosInstance from '../axios';
+import axiosInstance from "../axios";
 export default {
   name: "Navbar",
   data() {
     return {
-      loggedIn: localStorage.getItem("loggedIn")
-    }
+      loggedIn: localStorage.getItem("loggedIn"),
+      playlists: [],
+    };
   },
   // Applyiing the focus rule
   mounted() {
@@ -44,6 +55,12 @@ export default {
       document.querySelector("#home-link").classList.add("focus");
       document.querySelector("#search-link").classList.remove("focus");
     }
+    axiosInstance
+      .get("http://localhost:8000/albums/userplaylists")
+      .then((res) => {
+        this.playlists = res.data;
+        console.log("user", this.playlists);
+      });
   },
   methods: {
     add() {
@@ -51,13 +68,15 @@ export default {
         title: "New Playlist",
         songs: [],
         public: false,
-        artists: []
-      }
-      axiosInstance.post('http://localhost:8000/albums/playlists-create/', newPlaylist).then((res) => {
-        console.log(res.data)
-        this.$router.push(`/playlists/${res.data.id}`)
-      })
-    }
+        artists: [],
+      };
+      axiosInstance
+        .post("http://localhost:8000/albums/playlists-create/", newPlaylist)
+        .then((res) => {
+          console.log(res.data);
+          this.$router.push(`/playlists/${res.data.id}`);
+        });
+    },
   },
   watch: {
     $route(to, from) {

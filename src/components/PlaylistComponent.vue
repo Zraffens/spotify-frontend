@@ -252,9 +252,15 @@ export default {
         }
       });
       song.liked = !song.liked;
-      axiosInstance.patch(`http://localhost:8000/songs/${id}/`, {
-        liked: song.liked,
-      });
+      let likedSongs = []
+      axiosInstance.get(`http://localhost:8000/users/${this.playlist.created_by}/`).then(res => {
+        likedSongs = res.data.liked.map(obj => obj.id)
+      })
+      console.log(likedSongs)
+      likedSongs.push(id)
+      axiosInstance.patch(`http://localhost:8000/users/${this.playlist.created_by}/`, {
+        liked: likedSongs
+      }).then(res=> console.log('liked', res.data));
     },
     onHover(id) {
       const index = document.querySelector(`#a${id} .index`);
