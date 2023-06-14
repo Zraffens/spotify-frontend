@@ -135,33 +135,6 @@ export default {
     },
   },
   async created() {
-    // console.log("okay");
-    // // getting all the data about the playlist
-    // console.log(this.$route.path);
-    // if (this.$route.path === `/playlists/${this.id}`) {
-    //   this.type = "playlists";
-    //   let url = `http://localhost:8000/albums/playlists/${this.id}`;
-    //   await axios.get(url).then((res) => {
-    //     this.playlist = res.data;
-    //     this.artists = res.data.artistdetails
-    //     this.songs = res.data.songsinfo
-    //     console.log(res.data)
-    //   });
-    // } else if (this.$route.path === `/playlists/${this.id}`) {
-    //   let url = `http://localhost:8000/albums/albums/${this.id}`;
-    //   this.type = "albums";
-    //   await axios.get(url).then(async (res) => {
-    //     this.playlist = res.data;
-    //     this.songs = res.data.songsinfo
-    //   this.artists = res.data.artistdetails
-    //   });
-    // } else if (this.$route.path === `/artists/${this.id}`) {
-    //   let url = `http://localhost:8000/artists/${this.id}`;
-    //   this.type = "artists";
-    //   await axios.get(url).then(async (res) => {
-    //     this.playlist = res.data;
-    //     this.songs = res.data.songsinfo
-    //   });
     this.id = this.$route.params.id;
     if (this.$route.path === `/playlists/${this.id}`) {
       this.type = "playlists";
@@ -285,10 +258,6 @@ export default {
     },
   },
 
-  // await axios.get(`http://localhost:8000/albums/getsongs/${id}`).then((res) => {
-  //   this.songs = res.data
-  //   console.log(res.data);
-  // })
 };
 </script>
 

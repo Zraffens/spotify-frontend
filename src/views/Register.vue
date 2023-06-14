@@ -4,20 +4,83 @@
       <img src="logo.png" alt="Spotify Logo" />
     </div>
     <h1 class="register-heading">Create your Spotify Account</h1>
-    <form>
+    <form @submit.prevent="submit(e)">
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input
+          type="text"
+          v-model="username"
+          @change="usernameChange"
+          name="username"
+          :class="{ 'border-red': !username && usernameFieldTouched }"
+          id="username"
+          @input="usernameFieldTouched = true"
+        />
+      </div>
       <div class="form-group">
         <label for="email">Email address</label>
-        <input type="email" id="email" placeholder="Enter your email" />
+        <input
+          type="email"
+          :class="{ 'border-red': !email && emailFieldTouched }"
+          v-model="email"
+          name="email"
+          id="email"
+          @input="emailFieldTouched = true"
+          placeholder="Enter your email"
+        />
       </div>
       <div class="form-group">
         <label for="password">Password</label>
-        <input type="password" id="password" placeholder="Enter your password" />
+        <input
+          type="password"
+          v-model="password"
+          name="password"
+          id="password"
+          :class="{
+            'border-red':
+              (!password || password.length < 8) && passwordFieldTouched,
+          }"
+          @input="passwordFieldTouched = true"
+          placeholder="Enter your password"
+        />
       </div>
       <div class="form-group">
-        <label for="confirm-password">Confirm Password</label>
-        <input type="password" id="confirm-password" placeholder="Confirm your password" />
+        <label for="verify">Confirm Password</label>
+        <input
+          type="password"
+          v-model="verify"
+          name="verify"
+          id="verify"
+          :class="{ 'border-red': !passwordsMatch }"
+          placeholder="Confirm your password"
+        />
       </div>
-      <button class="register-button" @click="signup">Sign Up</button>
+      <div v-if="!username && usernameFieldTouched" class="error-message">
+        Username is required.
+      </div>
+      <div v-if="usernameExists" class="error-message">
+        Username already exists.
+      </div>
+      <div v-if="!email && emailFieldTouched" class="error-message">
+        Email is required.
+      </div>
+      <div v-if="!passwordsMatch" class="error-message">
+        Passwords do not match.
+      </div>
+      <div
+        v-if="(!password || password.length < 8) && passwordFieldTouched"
+        class="error-message"
+      >
+        Password must be at least 8 characters long.
+      </div>
+      <button
+        type="submit"
+        class="register-button"
+        :disabled="!submittable || !passwordsMatch"
+        @click="signup"
+      >
+        Sign Up
+      </button>
     </form>
     <div class="login-link">
       Already have an account? <router-link to="/login">Log in</router-link>
@@ -27,11 +90,77 @@
 
 <script>
 import axiosInstance from "../axios";
+import axios from "axios";
 import router from "@/router";
 export default {
-  name: 'RegisterPage',
-  
-}
+  name: "RegisterPage",
+  data() {
+    return {
+      username: "",
+      email: "",
+      password: "",
+      verify: "",
+      emailFieldTouched: false,
+      usernameFieldTouched: false,
+      passwordFieldTouched: false,
+      usernameExists: false,
+    };
+  },
+  computed: {
+    submittable() {
+      const isEmailValid = this.email;
+      const isUsernameValid = this.username;
+      const isPasswordValid = this.password && this.password.length >= 8;
+      axiosInstance;
+      return (
+        isEmailValid &&
+        isUsernameValid &&
+        isPasswordValid &&
+        this.passwordsMatch
+      );
+    },
+    passwordsMatch() {
+      return !(this.password !== this.verify && this.password && this.verify);
+    },
+  },
+  methods: {
+    async submit(e) {
+      const self = this;
+      await axios
+        .get("http://localhost:8000/users/")
+        .then((res) => {
+          this.usernameExists = false;
+          console.log(res.data);
+          res.data.forEach((i) => {
+            if (i.username == this.username) {
+              this.usernameExists = true;
+              console.log("aaaaasdf");
+              return;
+            }
+          });
+        })
+        .catch((err) => {
+          console.log("aa", err);
+        });
+      console.log(this.submittable);
+      if (this.submittable && !this.usernameExists) {
+        await axios
+          .post("http://localhost:8000/users/register/", {
+            username: this.username,
+            email: this.email,
+            password: this.password,
+          })
+          .then(function (response) {
+            console.log(response);
+            self.$router.push({ path: "/login", query: { registered: true } });
+          })
+          .catch(function (error) {
+            console.log(error);
+          });
+      }
+    },
+  },
+};
 </script>
 
 <style>
@@ -108,5 +237,14 @@ input {
 
 .login-link a:hover {
   text-decoration: underline;
+}
+.border-red {
+  border-color: red;
+}
+
+.error-message {
+  color: red;
+  font-size: 14px;
+  margin-top: 5px;
 }
 </style>
