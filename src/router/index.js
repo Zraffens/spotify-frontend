@@ -41,7 +41,7 @@ const routes = [
     path: "/liked",
     name: "Liked",
     component: () =>
-      import(/* webpackChunkName: "LikedSongs" */ "../views/LikedSongs.vue"),
+      import(/* webpackChunkName: "Playlist" */ "../views/Playlist.vue"),
   },
   {
     path: "/login",

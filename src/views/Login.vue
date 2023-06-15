@@ -61,7 +61,7 @@ export default {
           localStorage.setItem("access_token", res.data.access);
           localStorage.setItem("refresh_token", res.data.refresh);
           localStorage.setItem("loggedIn", true);
-          this.login({ username: this.username })
+          this.login({ username: this.username, id: res.data.id, liked: res.data.likedDetails })
           axiosInstance.defaults.headers = {
             Authorization: "JWT " + localStorage.getItem("access_token"),
           };

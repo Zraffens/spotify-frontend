@@ -20,7 +20,11 @@
     <div id="player" class="flex-2">
       <audio
         id="music-player"
-        :src="currentSong.file"
+        :src="
+          type == 'liked'
+            ? 'http://localhost:8000/' + currentSong.file
+            : currentSong.file
+        "
         @ended="repeat ? loop : next"
       >
         <!--http://localhost:8000/media/musics/Sushant_KC_-_Gulabi_Official_Lyric_Video.mp3 -->
@@ -69,7 +73,7 @@
         min="0"
         max="100"
         value="0"
-        style="width: 80%;"
+        style="width: 80%"
       />
       {{ duration }}
     </div>
@@ -93,6 +97,7 @@
 <script>
 import axios from "axios";
 import axiosInstance from "../axios";
+import { mapGetters } from "vuex";
 export default {
   name: "Player",
   data() {
@@ -104,7 +109,7 @@ export default {
       changingTime: false,
       playlist: {},
       index: 0,
-      currentSong: {artistdetails: {title: null, id: null}},
+      currentSong: { artistdetails: { title: null, id: null } },
       shuffle: false,
       repeat: false,
       albumLogo: "",
@@ -112,8 +117,9 @@ export default {
   },
   computed: {
     currentArtist() {
-      return this.currentSong.artistdetails.title
-    }
+      return this.currentSong.artistdetails.title;
+    },
+    ...mapGetters(["getLiked", "getID"]),
   },
   props: ["type", "id", "songID"],
   async created() {
@@ -134,43 +140,41 @@ export default {
     // this gets the required song played
     async starter() {
       if (this.type === "liked") {
-        await axiosInstance.get("http://localhost:8000/liked/").get(async (data) => {
-          const songId = this.songID ? this.songID : data.data[this.index];
-          let playlist = {
-            title: "Liked Songs",
-            songs: data.data,
-            artistn: [],
-          };
-          data.data.forEach((song) => {
-            playlist.artistn.push(song.artistdetails.title);
-          });
-          await axiosInstance
-            .get(`http://localhost:8000/songs/${songId}`)
-            .then((res) => {
-              let song = res.data;
-              this.duration = this.intoMinutes(song.length);
-              this.currentSong = song;
-              this.albumLogo = song.logo;
-            });
+        const songId = this.songID ? this.songID : data.data[this.index];
+        let playlist = {
+          title: "Liked Songs",
+          songs: this.getLiked,
+          artistn: [],
+        };
+        this.playlist = playlist
+        this.getLiked.forEach((song) => {
+          playlist.artistn.push(song.artistdetails.title);
         });
+        const song = this.getLiked.find((obj) => obj.id == songId);
+        this.duration = this.intoMinutes(song.length);
+        this.currentSong = song;
+        this.albumLogo = song.logo;
       } else {
-        const url = this.type === "artists" ? `http://localhost:8000/${this.type}/${this.id}` : `http://localhost:8000/albums/${this.type}/${this.id}`
+        const url =
+          this.type === "artists"
+            ? `http://localhost:8000/${this.type}/${this.id}`
+            : `http://localhost:8000/albums/${this.type}/${this.id}`;
         await axiosInstance
           .get(url) // getting the details of the playlist
           .then(async (res) => {
-            console.log("hello world")
+            console.log("hello world");
             console.log(res.data.songs, res.data.songsinfo);
             this.playlist = res.data; // putting all the data into this variable
-            let song = res.data.songsinfo.find(obj => obj.id == this.songID)
-            console.log(this.playlist.songsinfo, song, 'info, song')
+            let song = res.data.songsinfo.find((obj) => obj.id == this.songID);
+            console.log(this.playlist.songsinfo, song, "info, song");
             this.currentSong = song;
-            console.log('current', this.currentSong)
-            console.log(song)
+            console.log("current", this.currentSong);
+            console.log(song);
             this.duration = this.intoMinutes(song.length);
             this.albumLogo = song.logo;
             // this.duration, currentSong, albumLogo, playlist
           });
-      } 
+      }
       setTimeout(() => {
         // this.player.pause()
         this.player.play(); // I have to do this because the audio tag won't load by the time this plays
@@ -179,32 +183,16 @@ export default {
 
     async getSong(id) {
       if (this.type === "liked") {
-        await axiosInstance.get("http://localhost:8000/liked/").get((data) => {
-          const songId = this.songID ? this.songID : data.data[this.index];
-          axiosInstance.get(`http://localhost:8000/songs/${songId}`).then((res) => {
-            let song = res.data;
-            this.duration = this.intoMinutes(song.length);
-            this.currentSong = song;
-            this.albumLogo = song.logo;
-          });
-        });
+        let song = this.getLiked[this.index];
+        this.duration = this.intoMinutes(song.length);
+        this.currentSong = song;
+        this.albumLogo = song.logo;
       } else {
-        let song = this.playlist.songsinfo[this.index]
-        console.log('getsong', song)
-        // await axios
-        //   .get(`http://localhost:8000/songs/${songId}`)
-        //   .then(async (res1) => {
-        //     let song = res1.data;
-        //     song.artist = song.artistdetails.title
-        //     this.currentSong = song;
-        //     this.duration = this.intoMinutes(song.length);
-        //     console.log("went through");
-        //     const albumID = res1.data.album;
-        //     this.albumLogo = song.logo
-        //   });
-        this.currentSong = song
-        this.duration = this.intoMinutes(song.length)
-        this.albumLogo = song.logo
+        let song = this.playlist.songsinfo[this.index];
+        console.log("getsong", song);
+        this.currentSong = song;
+        this.duration = this.intoMinutes(song.length);
+        this.albumLogo = song.logo;
       }
     },
     checkNavigator() {
@@ -243,40 +231,17 @@ export default {
       this.player.volume = document.getElementById("change-vol").value;
     },
     changeTime() {
-        this.player.pause();
-        this.player.removeEventListener("timeupdate", this.updateSeek);
-        this.player.currentTime = (this.player.duration / 100) * parseFloat(document.getElementById("change-time").value);
-        this.currentTime = this.intoMinutes(this.player.currentTime);
-        if (this.played) {
-          this.player.play();
-        }
+      this.player.pause();
+      this.player.removeEventListener("timeupdate", this.updateSeek);
+      this.player.currentTime =
+        (this.player.duration / 100) *
+        parseFloat(document.getElementById("change-time").value);
+      this.currentTime = this.intoMinutes(this.player.currentTime);
+      if (this.played) {
+        this.player.play();
+      }
 
-      // this.player.pause();
-      // this.player.removeEventListener("timeupdate", this.increaseSeek); // this removes the event listener because nothing worked
-      // this.changingTime = true;
-      // let duration = document.getElementById("change-time").value;
-      // console.log(`${this.player.currentTime} before multiplying`);
-      // this.player.currentTime = (duration / 100) * this.player.duration; // updating the time by converting it into percentage
-      // // this.player.currentTime = duration * this.player.duration;
-      // console.log(`${this.player.currentTime} after multiplying`);
-      // this.currentTime = this.intoMinutes(this.player.currentTime); // converting the currenttime into minutes
-      // if (this.played) {
-      //   this.player.play(); // maintaining the status quo
-      // }
-      // this.player.addEventListener("timeupdate", this.increaseSeek);
-      // this.changingTime = false;
-
-      // music.currentTime = duration *
-      // music.currentTime = duration * clickPercent(event)
     },
-    // increaseSeek() {
-    //   if (!this.changingTime) {
-    //     let currentTime = this.player.currentTime;
-    //     let seeker = document.getElementById("change-time");
-    //     seeker.value = (currentTime / this.currentSong.length) * 100; // basic math to make the seek go ahead
-    //     this.currentTime = this.intoMinutes(this.player.currentTime);
-    //   }
-    // },
     increaseSeek() {
       if (!this.changingTime && !this.player.paused) {
         let currentTime = this.player.currentTime;
@@ -286,38 +251,53 @@ export default {
       }
     },
 
-
     like() {
       console.log(this.id);
       this.currentSong.liked = !this.currentSong.liked;
       console.log(this.currentSong);
-      axiosInstance.patch(`http://localhost:8000/songs/${this.currentSong.id}/`, {
-        liked: this.currentSong.liked,
-      });
+      axiosInstance.patch(
+        `http://localhost:8000/songs/${this.currentSong.id}/`,
+        {
+          liked: this.currentSong.liked,
+        }
+      );
     },
 
     async next() {
       this.player.pause();
-      let songs = this.playlist.songsinfo;
+      let songs = this.playlist.songsinfo ? this.playlist.songsinfo : this.playlist.songs;
       // resetting everything
       document.getElementById("change-time").value = 0;
       this.player.currentTime = 0;
       // conditional to check if it is in shuffle or if it is the last song in the list
-      console.log(this.playlist.songs.length)
-      if ((this.playlist.songsinfo.length === 1 || this.index + 1 === songs.length) && !this.shuffle) {
+      console.log('length')
+      console.log(this.playlist.songs.length);
+      if (
+        (this.playlist.songs.length === 1 ||
+          this.index + 1 === songs.length) &&
+        !this.shuffle
+      ) {
         this.index = 0;
       } else if (this.shuffle) {
         let index = this.index;
         while (this.index === index) {
-          this.index = Math.floor(Math.random() * this.playlist.songsinfo.length);
+          this.index = Math.floor(
+            Math.random() * this.playlist.songs.length
+          );
         }
       } else {
         this.index++;
       }
+      console.log(this.index, 'index')
 
       // getting the song
-      console.log(this.playlist.songsinfo, this.index)
-      this.getSong(this.playlist.songsinfo[this.index]);
+      if (this.playlist.songsinfo) {
+        
+        this.getSong(this.playlist.songsinfo[this.index]);
+      } else {
+        
+        this.getSong(this.playlist.songs[this.index]);
+      }
       this.player.load();
       if (this.played) {
         setTimeout(() => {
@@ -345,7 +325,7 @@ export default {
     },
   },
   watch: {
-    id: function(value) {
+    id: function (value) {
       console.log("changed");
       console.log(this.id);
       console.log(this);
@@ -355,7 +335,7 @@ export default {
       }, 1000);
       this.played = true;
     },
-    songID: function(value) {
+    songID: function (value) {
       console.log("changed");
       console.log(this.id);
       console.log(this);
@@ -365,7 +345,7 @@ export default {
       }, 1000);
       this.played = true;
     },
-    type: function(value) {
+    type: function (value) {
       console.log("changed");
       console.log(this.id);
       console.log(this);
@@ -375,12 +355,12 @@ export default {
       }, 1000);
       this.played = true;
     },
-    currentTime: function(value) {
+    currentTime: function (value) {
       if (this.currentTime == this.duration) {
-        console.log('checked')
-        this.next()
+        console.log("checked");
+        this.next();
       }
-    }
+    },
   },
 };
 </script>

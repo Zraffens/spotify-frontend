@@ -194,7 +194,7 @@ input[type="button"].button-primary:focus {
   transform: scale(1.06);
 }
 
-#main-app .fa-play {
+#main-app .buttons .fa-play {
   font-size: 1.15rem;
   margin: 1.4rem;
 }

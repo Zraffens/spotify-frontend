@@ -8,8 +8,12 @@
           <img :src="playlist.logo" alt="" />
         </div>
         <div class="playlist-details">
-          <p class="uppercase">{{ type.slice(0, type.length - 1) }}</p>
-          <h1 class="extremely-large" @blur="editTitle" :contenteditable="editable">
+          <p class="uppercase" v-if="type != 'liked'">{{ type.slice(0, type.length - 1) }}</p>
+          <h1
+            class="extremely-large"
+            @blur="editTitle"
+            :contenteditable="editable"
+          >
             {{ playlist.title }}
           </h1>
           <p>
@@ -34,7 +38,7 @@
       >
         <i class="fas fa-play"></i>
       </button>
-      <button @click="like" class="love">
+      <button @click="likePlaylist" class="love">
         <i class="fas fa-heart fa-4x"></i>
       </button>
     </div>
@@ -150,6 +154,7 @@
 import axios from "axios";
 import axiosInstance from "../axios";
 import { mapGetters } from "vuex";
+import { mapActions } from "vuex";
 
 export default {
   name: "PlaylistComponent",
@@ -176,9 +181,9 @@ export default {
       });
       return sum;
     },
-    ...mapGetters(["getUsername"]),
+    ...mapGetters(["getUsername", "getLiked", "getID"]),
   },
-  async created() {
+  async mounted() {
     this.id = this.$route.params.id;
     if (this.$route.path === `/playlists/${this.id}`) {
       this.type = "playlists";
@@ -201,7 +206,7 @@ export default {
         this.playlist = res.data;
         this.songs = res.data.songsinfo;
       });
-    } else {
+    } else if (this.$route.path === `/albums/${this.id}`) {
       this.type = "albums";
       let url = `http://localhost:8000/albums/albums/${this.id}`;
       await axiosInstance.get(url).then((res) => {
@@ -209,7 +214,36 @@ export default {
         this.playlist = res.data;
         this.songs = res.data.songsinfo;
       });
+    } else {
+      this.type = "liked";
+      let fliked = []
+      await axiosInstance.get('http://localhost:8000/users/profile/').then( res =>
+        fliked = res.data.likedDetails
+      )
+      let length = 0
+      let artists = []
+      let artistn = []
+      fliked.forEach(song => {
+        length+=song.length
+        artists.push(song.artist)
+        artistn.push(song.artistdetails.title)
+      })
+      this.playlist = {
+        title: "Liked Songs",
+        songsinfo: fliked,
+        length,
+        created_by: this.getID,
+        artists: [...new Set(artists)],
+        artistn: [...new Set(artistn)]
+      };
+      this.songs = fliked
     }
+    this.playlist.songsinfo.forEach((song) => {
+      console.log();
+      if (this.getLiked.map((obj) => obj.id).includes(song.id)) {
+        song.liked = true;
+      }
+    });
   },
   methods: {
     async allTheFuckingWork() {
@@ -234,7 +268,7 @@ export default {
     },
 
     // it changes the color of the like button when it is pressed
-    like() {
+    likePlaylist() {
       if (!this.liked) {
         document.querySelector(".love").style.color = "#1db954";
         this.liked = true;
@@ -246,21 +280,26 @@ export default {
     likeSong(id, likedSong) {
       console.log(id);
       let song;
-      this.songs.forEach((item) => {
+      this.playlist.songsinfo.forEach((item) => {
         if (item.id === id) {
           song = item;
         }
       });
+      if (song.liked) {
+        this.like({ song });
+      } else {
+        this.unlike({ song });
+      }
       song.liked = !song.liked;
-      let likedSongs = []
-      axiosInstance.get(`http://localhost:8000/users/${this.playlist.created_by}/`).then(res => {
-        likedSongs = res.data.liked.map(obj => obj.id)
-      })
-      console.log(likedSongs)
-      likedSongs.push(id)
-      axiosInstance.patch(`http://localhost:8000/users/${this.playlist.created_by}/`, {
-        liked: likedSongs
-      }).then(res=> console.log('liked', res.data));
+      let likedSongs = this.getLiked.map((song) => song.id);
+      console.log(likedSongs, "before pushed");
+      likedSongs.push(id);
+      console.log(likedSongs);
+      axiosInstance
+        .patch(`http://localhost:8000/users/${this.playlist.created_by}/`, {
+          liked: likedSongs,
+        })
+        .then((res) => console.log("liked", res.data));
     },
     onHover(id) {
       const index = document.querySelector(`#a${id} .index`);
@@ -290,24 +329,29 @@ export default {
       }
     },
     async add(song) {
-      const songs = this.songs.map(obj => obj.id)
-      this.songs.push(song)
-      songs.push(song.id)
-      console.log(songs)
+      const songs = this.songs.map((obj) => obj.id);
+      this.songs.push(song);
+      songs.push(song.id);
+      console.log(songs);
       await axiosInstance
-          .patch(`http://localhost:8000/albums/playlists/${this.id}`, {songs: songs})
-          .then((res) => {
-            console.log(res.data);
-          });
+        .patch(`http://localhost:8000/albums/playlists/${this.id}`, {
+          songs: songs,
+        })
+        .then((res) => {
+          console.log(res.data);
+        });
     },
     async editTitle() {
-      const title = document.querySelector("h1.extremely-large").innerText
+      const title = document.querySelector("h1.extremely-large").innerText;
       await axiosInstance
-          .patch(`http://localhost:8000/albums/playlists/${this.id}`, {title: title})
-          .then((res) => {
-            console.log(res.data);
-          });
-    }
+        .patch(`http://localhost:8000/albums/playlists/${this.id}`, {
+          title: title,
+        })
+        .then((res) => {
+          console.log(res.data);
+        });
+    },
+    ...mapActions(["like", "unlike"]),
   },
 
   watch: {
@@ -318,6 +362,7 @@ export default {
         this.artists = [];
         this.id = this.$route.params.id;
         if (this.$route.path === `/playlists/${this.id}`) {
+          this.type = "playlists";
           let url = `http://localhost:8000/albums/playlists/${this.id}`;
           await axiosInstance.get(url).then((res) => {
             this.playlist = res.data;
@@ -327,17 +372,44 @@ export default {
             // this will push the list of songs available for the given playlist
             this.songs = res.data.songsinfo;
           });
-        } else {
+        } else if (this.$route.path === `/albums/${this.id}`) {
+          this.type = "albums";
           let url = `http://localhost:8000/albums/albums/${this.id}`;
           await axiosInstance.get(url).then((res) => {
             console.log("songinfo", res.data.songsinfo);
             this.playlist = res.data;
             this.songs = res.data.songsinfo;
           });
+        } else if (this.$route.path === `/liked/`) {
+          this.type = "liked";
+          this.playlist = this.getLiked;
+          this.songs = this.getLiked.songsinfo;
         }
       }
     },
+    getLiked(old, newVal) {
+      this.type = "liked";
+      let length = 0
+      let artists = []
+      let artistn = []
+      console.log(newVal, 'change', this.getUsername)
+      this.$store.state.liked.forEach(song => {
+        length+=song.length
+        artists.push(song.artist)
+        artistn.push(song.artistdetails.title)
+      })
+      this.playlist = {
+        title: "Liked Songs",
+        songsinfo: this.$store.state.liked,
+        length,
+        created_by: this.getID,
+        artists: [...new Set(artists)],
+        artistn: [...new Set(artistn)]
+      };
+      this.songs = this.$store.state.liked.map(song => song.id);
+    }
   },
+
 };
 </script>
 
@@ -396,7 +468,9 @@ p {
   margin: 2rem 1rem;
 }
 
-.album, .duration, .like {
+.album,
+.duration,
+.like {
   text-align: center;
 }
 
