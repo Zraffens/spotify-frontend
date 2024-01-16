@@ -60,7 +60,11 @@ export default {
     await axiosInstance
       .get("http://localhost:8000/users/profile/")
       .then((res) => {
-        this.login({ username: res.data.username, id: res.data.id, liked: res.data.likedDetails });
+        this.login({
+          username: res.data.username,
+          id: res.data.id,
+          liked: res.data.likedDetails,
+        });
       });
   },
   methods: {
